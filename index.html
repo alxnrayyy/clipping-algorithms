@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Визуализация Алгоритмов Отсечения</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --darker: #020617;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 50%, #1e293b 100%);
+            min-height: 100vh;
+            color: var(--light);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+        
+        h1 {
+            font-size: 3em;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+        
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--glass);
+        }
+        
+        .card-header h3 {
+            font-size: 1.4em;
+            color: var(--light);
+        }
+        
+        .icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 180px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid var(--glass);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--light);
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 15px 0;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--secondary), #059669);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--accent), #d97706);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-input-wrapper input[type="file"]:hover {
+            border-color: var(--secondary);
+            background: rgba(15, 23, 42, 0.8);
+        }
+        
+        .canvas-container {
+            position: relative;
+            background: var(--darker);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass);
+        }
+        
+        canvas {
+            width: 100%;
+            height: 600px;
+            border-radius: 12px;
+            background: #0a0f1c;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            padding: 8px 16px;
+            background: var(--glass);
+            border-radius: 25px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .results-panel {
+            margin-top: 25px;
+        }
+        
+        .results-content {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .algorithm-info {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(99, 102, 241, 0.1));
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: var(--glass);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .floating-controls {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .floating-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--glass);
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2em;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .floating-btn:hover {
+            transform: scale(1.1);
+            background: var(--primary);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header animate-in">
+            <h1>🎯 Визуализация Алгоритмов Отсечения</h1>
+            <div class="subtitle">Интерактивная демонстрация алгоритмов Сазерленда-Коэна и Сазерленда-Ходжмена</div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Левая панель - управление -->
+            <div class="card animate-in" style="animation-delay: 0.1s">
+                <div class="card-header">
+                    <div class="icon">📁</div>
+                    <h3>Управление данными</h3>
+                </div>
+                
+                <textarea id="inputData">
+5
+150 150 450 450
+100 200 500 300
+250 100 250 500
+400 150 200 400
+300 400 400 300
+200 200 400 400</textarea>
+                
+                <div class="btn-group">
+                    <button class="btn btn-success" id="loadExampleBtn">
+                        <span>📥</span> Загрузить пример
+                    </button>
+                    <button class="btn btn-danger" id="clearCanvasBtn">
+                        <span>🗑️</span> Очистить всё
+                    </button>
+                </div>
+                
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept=".txt">
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 15px; color: var(--accent);">🔷 Тестовый многоугольник</h4>
+                    <button class="btn btn-warning" id="loadPolygonBtn" style="width: 100%">
+                        <span>⬡</span> Загрузить многоугольник
+                    </button>
+                </div>
+            </div>
+
+            <!-- Правая панель - алгоритмы -->
+            <div class="card animate-in" style="animation-delay: 0.2s">
+                <div class="card-header">
+                    <div class="icon">⚡</div>
+                    <h3>Алгоритмы отсечения</h3>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <h4 style="margin-bottom: 15px; color: var(--primary);">📏 Алгоритм Сазерленда-Коэна</h4>
+                    <button class="btn" id="cohenSutherlandBtn" style="width: 100%">
+                        <span>🎯</span> Запустить отсечение отрезков
+                    </button>
+                </div>
+                
+                <div>
+                    <h4 style="margin-bottom: 15px; color: var(--secondary);">🔺 Алгоритм Сазерленда-Ходжмена</h4>
+                    <button class="btn btn-success" id="polygonClippingBtn" style="width: 100%">
+                        <span>🔷</span> Запустить отсечение многоугольника
+                    </button>
+                </div>
+                
+                <div class="legend" style="margin-top: 25px;">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3b82f6;"></div>
+                        <span>Исходные объекты</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ef4444;"></div>
+                        <span>Отсекающее окно</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #10b981;"></div>
+                        <span>Результат отсечения</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Холст -->
+        <div class="canvas-container animate-in" style="animation-delay: 0.3s">
+            <div class="floating-controls">
+                <div class="floating-btn" title="Увеличить" onclick="app.zoomIn()">+</div>
+                <div class="floating-btn" title="Уменьшить" onclick="app.zoomOut()">-</div>
+                <div class="floating-btn" title="Сбросить вид" onclick="app.resetView()">↺</div>
+            </div>
+            <canvas id="mainCanvas" width="1000" height="600"></canvas>
+        </div>
+
+        <!-- Панель информации -->
+        <div class="card algorithm-info animate-in" style="animation-delay: 0.4s">
+            <div class="card-header">
+                <div class="icon">ℹ️</div>
+                <h3>Информация об алгоритмах</h3>
+            </div>
+            <div id="algorithmInfo">
+                <p>Выберите алгоритм для отображения подробной информации...</p>
+            </div>
+        </div>
+
+        <!-- Результаты и статистика -->
+        <div class="card results-panel animate-in" style="animation-delay: 0.5s">
+            <div class="card-header">
+                <div class="icon">📊</div>
+                <h3>Результаты отсечения</h3>
+            </div>
+            <div class="results-content">
+                <div id="results">Запустите алгоритм для просмотра результатов...</div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statVisible">0</div>
+                        <div class="stat-label">Видимых отрезков</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-label">Всего отрезков</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statEfficiency">0%</div>
+                        <div class="stat-label">Эффективность</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTime">0ms</div>
+                        <div class="stat-label">Время выполнения</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="clipping-algorithms.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
